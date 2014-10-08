@@ -1,0 +1,9 @@
+package htu21df;
+
+message TempAndHumidity {
+  optional int64 recorded_timestamp_ms = 1;
+  optional double temp_degrees_c = 2;
+  optional double percent_relative_humidity = 3;
+  optional string sensor_name = 4;
+  optional string debug = 5;
+}
