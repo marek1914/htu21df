@@ -5,4 +5,5 @@
 *.o
 *.so*
 *_pb2.py
+*.pyc
 collector/sensor/htu21df_demo
