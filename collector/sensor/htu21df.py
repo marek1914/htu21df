@@ -6,7 +6,7 @@ import os
 import sys
 
 
-HTU21DF_C_SO = './libhtu21df.so.1.0.1'
+HTU21DF_C_SO = os.path.join(os.path.dirname(__file__), './libhtu21df.so.1.0.1')
 
 
 if not os.path.isfile(HTU21DF_C_SO):

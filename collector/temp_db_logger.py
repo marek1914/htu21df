@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import htu21df
+from sensor import htu21df
 import sqlite3
 import time
 

@@ -1,0 +1,8 @@
+._*
+.DS_Store
+*.pdf
+*temp.db
+*.o
+*.so*
+*_pb2.py
+collector/sensor/htu21df_demo
