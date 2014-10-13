@@ -7,3 +7,11 @@ message TempAndHumidity {
   optional string sensor_name = 4;
   optional string debug = 5;
 }
+
+message UploadRequest {
+  repeated TempAndHumidity temp_and_humidty_data = 1;
+}
+
+message UploadResponse {
+  optional int32 num_saved = 1;
+}

@@ -7,3 +7,4 @@
 *_pb2.py
 *.pyc
 collector/sensor/htu21df_demo
+appengine/temp-sensor-app/htu21df

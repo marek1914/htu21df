@@ -3,5 +3,6 @@ CREATE TABLE IF NOT EXISTS temp_and_humidity (
   temp_degrees_c REAL, 
   relative_humidity REAL, 
   sensor TEXT, 
-  debug TEXT
+  debug TEXT,
+  uploaded INTEGER DEFAULT 0
 );
