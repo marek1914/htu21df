@@ -21,7 +21,7 @@ def main():
       now = int(time.time() * 1e3)
       cur = conn.cursor()
       cur.execute('''
-        INSERT INTO temp_and_humidity VALUES (%d, %.3f, %.3f, 'htu21df', '%s');
+        INSERT INTO temp_and_humidity VALUES (%d, %.3f, %.3f, 'htu21df', '%s', 0);
         ''' % (now, temp, humidity, __file__))
     time.sleep(60 * 5)
 
