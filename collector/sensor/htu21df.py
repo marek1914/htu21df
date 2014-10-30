@@ -25,17 +25,17 @@ class Htu21df(object):
 
   def __enter__(self):
     return self
-  
+
   def __exit__(self, *args):
     self.close()
 
   def close(self):
     libhtu21df.close_connection(self._fd)
-    
+
   @property
   def temperature(self):
     return libhtu21df.read_temperature(self._fd)
-  
+
   @property
   def humidity(self):
     return libhtu21df.read_humidity(self._fd)

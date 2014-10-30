@@ -4,11 +4,11 @@ import (
   "fmt"
   "io/ioutil"
   "net/http"
-  
+
   "code.google.com/p/goprotobuf/proto"
-  
+
   "appengine"
-  
+
   "htu21df"
 )
 
@@ -38,23 +38,23 @@ func upload(w http.ResponseWriter, r *http.Request) {
     if checkErr(w, c, err, "Failed to read request.") {
       return
     }
-    
+
     c.Infof("Received %v bytes", len(bytes))
     c.Infof("ContentLength %v", r.ContentLength)
-    
+
     request := &htu21df.UploadRequest{}
     err = proto.Unmarshal(bytes, request)
     if checkErr(w, c, err, "Unable to parse proto.") {
       return
     }
-    
+
     c.Infof("request contains %v records", len(request.TempAndHumidtyData))
-    
+
     response := &htu21df.UploadResponse{
       NumSaved:  proto.Int32(int32(len(request.TempAndHumidtyData))),
     }
     c.Infof("response %v", response.String())
-    
+
     responseData, err := proto.Marshal(response)
     if checkErr(w, c, err, "Unable to encode response proto.") {
       return

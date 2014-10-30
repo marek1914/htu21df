@@ -34,4 +34,3 @@ clean:
 	rm -f sensor/htu21df.pyc
 	rm -f temp_and_humidity_pb2.py
 	rm -f temp_and_humidity_pb2.pyc
-	
