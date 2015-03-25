@@ -8,10 +8,17 @@ message TempAndHumidity {
   optional string debug = 5;
 }
 
+message DataAndClientId {
+  optional string client_id = 1;
+  optional TempAndHumidity temp_and_humidty_data = 2;
+}
+
 message UploadRequest {
   repeated TempAndHumidity temp_and_humidty_data = 1;
+  repeated DataAndClientId data_and_client_id = 2;
 }
 
 message UploadResponse {
   optional int32 num_saved = 1;
+  repeated string unsaved_client_ids = 2;
 }

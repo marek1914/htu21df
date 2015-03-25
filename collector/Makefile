@@ -20,7 +20,10 @@ temp_and_humidity_pb2.py: ../common/temp_and_humidity.proto
 	@echo 'Compiling temp_and_humidity.proto '
 	protoc --python_out=. --proto_path=../common ../common/temp_and_humidity.proto
 
-test: all
+pytest: temp_and_humidity_pb2.py
+	python temp_db_logger_extractor_test.py
+
+test: all pytest
 	@echo 'Testing C demo'
 	@./sensor/htu21df_demo
 	@echo 'Testing python wrapper'
