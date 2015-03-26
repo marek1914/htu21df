@@ -14,17 +14,6 @@ import (
   "htu21df"
 )
 
-/*
-
-message TempAndHumidity {
-  optional int64 recorded_timestamp_ms = 1;
-  optional double temp_degrees_c = 2;
-  optional double percent_relative_humidity = 3;
-  optional string sensor_name = 4;
-  optional string debug = 5;
-}
-
-*/
 type tempAndHumidityRecord struct {
 	ClientId string
   RecordedTimestampMs int64
@@ -45,12 +34,12 @@ func root(w http.ResponseWriter, r *http.Request) {
 
 func respondWith400(w http.ResponseWriter, c appengine.Context, err error, msg string) {
   w.WriteHeader(http.StatusBadRequest)
-  c.Errorf("%v error: %v", msg, err)
+  c.Errorf("%v error: %v", msg, err.Error())
 }
 
 func respondWith500(w http.ResponseWriter, c appengine.Context, err error, msg string) {
   w.WriteHeader(http.StatusInternalServerError)
-  c.Errorf("%v error: %v", msg, err)
+  c.Errorf("%v error: %v", msg, err.Error())
 }
 
 func checkErr(w http.ResponseWriter, c appengine.Context, err error, msg string) bool {
@@ -85,9 +74,26 @@ func upload(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  c.Infof("request contains %v records", len(request.DataAndClientId))
+  numSaved, err := saveRecords(c, request)
+  if checkErr(w, c, err, "Unable put entities.") {
+    return
+  }
 
+  response := &htu21df.UploadResponse{
+    NumSaved:  proto.Int32(numSaved),
+  }
+  c.Infof("response %v", response.String())
+
+  responseData, err := proto.Marshal(response)
+  if checkErr(w, c, err, "Unable to encode response proto.") {
+    return
+  }
+  w.Write(responseData)
+}
+
+func saveRecords(c appengine.Context, request *htu21df.UploadRequest) (numSaved int32, err error) {
   numRecords := len(request.DataAndClientId)
+  c.Infof("request contains %v records", numRecords)
   keys := make([]*datastore.Key, numRecords)
   records := make([]*tempAndHumidityRecord, numRecords)
 
@@ -104,18 +110,9 @@ func upload(w http.ResponseWriter, r *http.Request) {
   }
 
   newKeys, err := datastore.PutMulti(c, keys, records)
-  if checkErr(w, c, err, "Unable put entities.") {
-    return
+  if err != nil {
+    return 0, err
   }
 
-  response := &htu21df.UploadResponse{
-  	NumSaved:  proto.Int32(int32(len(newKeys))),
-  }
-  c.Infof("response %v", response.String())
-
-  responseData, err := proto.Marshal(response)
-  if checkErr(w, c, err, "Unable to encode response proto.") {
-    return
-  }
-  w.Write(responseData)
+  return int32(len(newKeys)), nil
 }
