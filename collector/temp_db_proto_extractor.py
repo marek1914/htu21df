@@ -20,7 +20,8 @@ def pb_factory(cursor, row):
   return (row[0], rec_proto)
 
 
-def extract_all(db_file):
+def extract_all(db_file, limit):
+  limit_clause = '' if limit < 0 else ' LIMIT %d' % limit    
   with sqlite3.connect(db_file) as conn:
     conn.row_factory = pb_factory
     protos = conn.execute('''
@@ -34,7 +35,7 @@ def extract_all(db_file):
         FROM
           temp_and_humidity
         WHERE
-          NOT uploaded LIMIT 10;''').fetchall()
+          NOT uploaded%s;''' % limit_clause).fetchall()
     return dict(protos)
 
 
@@ -73,7 +74,7 @@ def upload_records(record_items, remote_host, db_file):
   print ('Sent up %d records, response verified %d were received'
       % (num_sent, response_proto.num_saved))
   num_updated = update_uploaded(db_file, (r[0] for r in record_items))
-  print '%d records marked uploaded' % response_proto.num_saved
+  print '%d records marked uploaded' % num_updated
 
 
 def main():
@@ -87,9 +88,12 @@ def main():
   parser.add_argument('--batch_size', type=int, default=-1,
       help='Upload records in batches of this size. Default (-1)'
            ' is to upload all in one batch.')
+  parser.add_argument('--limit', type=int, default=-1,
+      help='Upload no more than this many records. Default (-1)'
+           ' is to upload all in one batch.')
   args = parser.parse_args()
 
-  records = extract_all(args.db_file)
+  records = extract_all(args.db_file, args.limit)
   batch_size = len(records) if args.batch_size == -1 else args.batch_size
   for batch in iter_chunk(records.items(), batch_size):
     upload_records(batch, args.remote_host, args.db_file)
