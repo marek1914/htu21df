@@ -73,7 +73,7 @@ def upload_records(record_items, remote_host, db_file):
   response_proto.ParseFromString(resp.content)
   print ('Sent up %d records, response verified %d were received'
       % (num_sent, response_proto.num_saved))
-  if response.num_saved == num_sent:
+  if response_proto.num_saved == num_sent:
     num_updated = update_uploaded(db_file, (r[0] for r in record_items))
     print '%d records marked uploaded' % num_updated  
 
