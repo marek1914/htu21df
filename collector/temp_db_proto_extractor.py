@@ -73,8 +73,9 @@ def upload_records(record_items, remote_host, db_file):
   response_proto.ParseFromString(resp.content)
   print ('Sent up %d records, response verified %d were received'
       % (num_sent, response_proto.num_saved))
-  num_updated = update_uploaded(db_file, (r[0] for r in record_items))
-  print '%d records marked uploaded' % num_updated
+  if response.num_saved == num_sent:
+    num_updated = update_uploaded(db_file, (r[0] for r in record_items))
+    print '%d records marked uploaded' % num_updated  
 
 
 def main():
@@ -85,9 +86,9 @@ def main():
   parser.add_argument('--db_file', type=str,
       default=os.path.join(os.path.dirname(__file__), 'temp.db'),
       help='sqlite database with records to upload.')
-  parser.add_argument('--batch_size', type=int, default=-1,
-      help='Upload records in batches of this size. Default (-1)'
-           ' is to upload all in one batch.')
+  parser.add_argument('--batch_size', type=int, default=500,
+      help='Upload records in batches of this size. -1 indicates'
+           ' to upload all in one batch.')
   parser.add_argument('--limit', type=int, default=-1,
       help='Upload no more than this many records. Default (-1)'
            ' is to upload all in one batch.')
