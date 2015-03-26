@@ -35,7 +35,9 @@ def extract_all(db_file, limit):
         FROM
           temp_and_humidity
         WHERE
-          NOT uploaded%s;''' % limit_clause).fetchall()
+          NOT uploaded
+        ORDER BY
+          timestamp%s;''' % limit_clause).fetchall()
     return dict(protos)
 
 
