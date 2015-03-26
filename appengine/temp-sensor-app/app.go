@@ -19,8 +19,8 @@ type tempAndHumidityRecord struct {
   RecordedTimestampMs int64
   TempDegreesC float64
   PercentRelativeHumidity float64
-  SensorName string
-  Debug string
+  SensorName string `datastore:",noindex"`
+  Debug string `datastore:",noindex"`
 }
 
 func init() {
