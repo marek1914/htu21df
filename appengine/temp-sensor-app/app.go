@@ -15,7 +15,7 @@ import (
 )
 
 type tempAndHumidityRecord struct {
-	ClientId string
+  ClientId string
   RecordedTimestampMs int64
   TempDegreesC float64
   PercentRelativeHumidity float64
@@ -74,16 +74,13 @@ func upload(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  numSaved, err := saveRecords(c, request)
-  if checkErr(w, c, err, "Unable put entities.") {
+  response := &htu21df.UploadResponse{}
+  if err = buildResponse(c, request, response); err != nil {
+    respondWith500(w, c, err, err.Error())
     return
   }
 
-  response := &htu21df.UploadResponse{
-    NumSaved:  proto.Int32(numSaved),
-  }
   c.Infof("response %v", response.String())
-
   responseData, err := proto.Marshal(response)
   if checkErr(w, c, err, "Unable to encode response proto.") {
     return
@@ -91,28 +88,69 @@ func upload(w http.ResponseWriter, r *http.Request) {
   w.Write(responseData)
 }
 
-func saveRecords(c appengine.Context, request *htu21df.UploadRequest) (numSaved int32, err error) {
+func buildResponse(c appengine.Context, request *htu21df.UploadRequest, response *htu21df.UploadResponse) (err error) {
+  newKeys, err := saveRecords(c, request)
+  if err != nil {
+    return err
+  }
+
+  unsavedIds, err := verifySaved(c, request.DataAndClientId, newKeys)
+  if err != nil {
+    return err
+  }
+
+  response.NumSaved = proto.Int(len(newKeys))
+  response.UnsavedClientIds = unsavedIds
+  return nil;
+}
+
+func saveRecords(c appengine.Context, request *htu21df.UploadRequest) (newKeys []*datastore.Key, err error) {
   numRecords := len(request.DataAndClientId)
   c.Infof("request contains %v records", numRecords)
   keys := make([]*datastore.Key, numRecords)
   records := make([]*tempAndHumidityRecord, numRecords)
-
   for i, dataAndId := range request.DataAndClientId {
   	keys[i] = newRecordKey(c)
   	records[i] = &tempAndHumidityRecord {
-  		ClientId: dataAndId.GetClientId(),
-  	  RecordedTimestampMs: dataAndId.TempAndHumidtyData.GetRecordedTimestampMs(),
-  	  TempDegreesC: dataAndId.TempAndHumidtyData.GetTempDegreesC(),
-  	  PercentRelativeHumidity: dataAndId.TempAndHumidtyData.GetPercentRelativeHumidity(),
-  	  SensorName: dataAndId.TempAndHumidtyData.GetSensorName(),
-  	  Debug: dataAndId.TempAndHumidtyData.GetDebug(),
-  	}
+      ClientId: dataAndId.GetClientId(),
+      RecordedTimestampMs: dataAndId.TempAndHumidtyData.GetRecordedTimestampMs(),
+      TempDegreesC: dataAndId.TempAndHumidtyData.GetTempDegreesC(),
+      PercentRelativeHumidity: dataAndId.TempAndHumidtyData.GetPercentRelativeHumidity(),
+      SensorName: dataAndId.TempAndHumidtyData.GetSensorName(),
+      Debug: dataAndId.TempAndHumidtyData.GetDebug(),
+    }
   }
 
-  newKeys, err := datastore.PutMulti(c, keys, records)
+  newKeys, err = datastore.PutMulti(c, keys, records)
   if err != nil {
-    return 0, err
+    return nil, err
   }
+  return newKeys, nil
+}
 
-  return int32(len(newKeys)), nil
+func verifySaved(c appengine.Context, clientRecords []*htu21df.DataAndClientId, newKeys []*datastore.Key) ([]string, error) {
+  numSaved := int32(len(newKeys))
+  numRecords := int32(len(clientRecords))
+
+  if numRecords != numSaved && numSaved > 0 {
+    // find unsaved client ids
+    unsavedIds := make([]string, numRecords - numSaved)
+    savedRecords := make([]*tempAndHumidityRecord, numSaved)
+    if err := datastore.GetMulti(c, newKeys, savedRecords); err != nil {
+      c.Infof("Unable to query saved records")
+      return nil, err
+    }
+    clientIds := make(map[string]bool)
+    for _, r := range savedRecords {
+      clientIds[r.ClientId] = true
+    }
+    for i, dataAndId := range clientRecords {
+      if !clientIds[dataAndId.GetClientId()] {
+        unsavedIds[i] = dataAndId.GetClientId()
+      }
+    }
+    c.Infof("Found unsaved ids %v", unsavedIds)
+    return unsavedIds, nil
+  }
+  return nil, nil
 }
