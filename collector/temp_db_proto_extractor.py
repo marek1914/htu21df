@@ -6,6 +6,7 @@ import os
 import requests
 import sqlite3
 import sys
+import time
 
 import temp_and_humidity_pb2 as pb
 
@@ -97,12 +98,22 @@ def main():
   parser.add_argument('--limit', type=int, default=-1,
       help='Upload no more than this many records. Default (-1)'
            ' is to upload all in one batch.')
+  parser.add_argument("--run_forever", action="store_true", default=False)
+  parser.add_argument('--period_secs', type=int, default=(60 * 60),
+      help='Run an upload every N seconds.')
   args = parser.parse_args()
 
-  records = extract_all(args.db_file, args.limit)
-  batch_size = len(records) if args.batch_size == -1 else args.batch_size
-  for batch in iter_chunk(records.items(), batch_size):
-    upload_records(batch, args.remote_host, args.db_file)
+  loop = True
+  while loop:
+    records = extract_all(args.db_file, args.limit)
+    batch_size = len(records) if args.batch_size == -1 else args.batch_size
+    for batch in iter_chunk(records.items(), batch_size):
+      upload_records(batch, args.remote_host, args.db_file)
+    if not args.run_forever:
+      loop = False
+    else:
+      print 'Running again in %ds' % args.period_secs
+      time.sleep(args.period_secs)
 
 
 if __name__ == '__main__':
