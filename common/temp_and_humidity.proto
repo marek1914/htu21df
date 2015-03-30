@@ -14,8 +14,7 @@ message DataAndClientId {
 }
 
 message UploadRequest {
-  repeated TempAndHumidity temp_and_humidty_data = 1;
-  repeated DataAndClientId data_and_client_id = 2;
+  repeated DataAndClientId data_and_client_id = 1;
 }
 
 message UploadResponse {

@@ -21,7 +21,7 @@ def pb_factory(cursor, row):
 
 
 def extract_all(db_file, limit):
-  limit_clause = '' if limit < 0 else ' LIMIT %d' % limit    
+  limit_clause = '' if limit < 0 else ' LIMIT %d' % limit
   with sqlite3.connect(db_file) as conn:
     conn.row_factory = pb_factory
     protos = conn.execute('''
@@ -62,7 +62,6 @@ def upload_records(record_items, remote_host, db_file):
   num_sent = len(record_items)
   request_proto = pb.UploadRequest()
   for rowid, rec_proto in record_items:
-    request_proto.temp_and_humidty_data.add().CopyFrom(rec_proto)
     proto_and_id = request_proto.data_and_client_id.add()
     proto_and_id.client_id = str(rowid)
     proto_and_id.temp_and_humidty_data.CopyFrom(rec_proto)
@@ -79,7 +78,7 @@ def upload_records(record_items, remote_host, db_file):
   else:
     unsaved_ids = set(response_proto.unsaved_client_ids)
     print 'Some records unsaved: [%s]' % ','.join(unsaved_ids)
-    num_updated = update_uploaded(db_file, 
+    num_updated = update_uploaded(db_file,
         (r[0] for r in record_items if str(r[0]) not in unsaved_ids))
   print '%d records marked uploaded' % num_updated
 
