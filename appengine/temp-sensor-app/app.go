@@ -14,6 +14,8 @@ import (
   "htu21df"
 )
 
+const EntityName = "TempAndHumidity"
+
 type tempAndHumidityRecord struct {
   ClientId string
   RecordedTimestampMs int64
@@ -51,18 +53,18 @@ func checkErr(w http.ResponseWriter, c appengine.Context, err error, msg string)
 }
 
 func newRecordKey(c appengine.Context) *datastore.Key {
-	key := datastore.NewIncompleteKey(c, "TempAndHumidity", nil)
+	key := datastore.NewIncompleteKey(c, EntityName, nil)
   return key
 }
 
 func upload(w http.ResponseWriter, r *http.Request) {
   c := appengine.NewContext(r)
   c.Infof("Requested URL: %v", r.URL)
-	
+
   if (r.Body == nil) {
     respondWith400(w, c, errors.New("Response body is nil"), "Response body is nil")
   }
-	
+
   bytes, err := ioutil.ReadAll(r.Body)
   if checkErr(w, c, err, "Failed to read request.") {
     return
@@ -88,7 +90,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
   w.Write(responseData)
 }
 
-func buildResponse(c appengine.Context, request *htu21df.UploadRequest, response *htu21df.UploadResponse) (err error) {
+func buildResponse(c appengine.Context, request *htu21df.UploadRequest, response *htu21df.UploadResponse) error {
   newKeys, err := saveRecords(c, request)
   if err != nil {
     return err
@@ -104,7 +106,7 @@ func buildResponse(c appengine.Context, request *htu21df.UploadRequest, response
   return nil;
 }
 
-func saveRecords(c appengine.Context, request *htu21df.UploadRequest) (newKeys []*datastore.Key, err error) {
+func saveRecords(c appengine.Context, request *htu21df.UploadRequest) ([]*datastore.Key, error) {
   numRecords := len(request.DataAndClientId)
   c.Infof("request contains %v records", numRecords)
   keys := make([]*datastore.Key, numRecords)
@@ -121,7 +123,7 @@ func saveRecords(c appengine.Context, request *htu21df.UploadRequest) (newKeys [
     }
   }
 
-  newKeys, err = datastore.PutMulti(c, keys, records)
+  newKeys, err := datastore.PutMulti(c, keys, records)
   if err != nil {
     return nil, err
   }
