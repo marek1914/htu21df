@@ -17,7 +17,7 @@ import (
 const EntityName = "TempAndHumidity"
 
 type tempAndHumidityRecord struct {
-  ClientId string
+  ClientId string // not clear this is needed after upload confirmed.
   RecordedTimestampMs int64
   TempDegreesC float64
   PercentRelativeHumidity float64
@@ -131,9 +131,11 @@ func saveRecords(c appengine.Context, request *htu21df.UploadRequest) ([]*datast
 }
 
 func verifySaved(c appengine.Context, clientRecords []*htu21df.DataAndClientId, newKeys []*datastore.Key) ([]string, error) {
-  numSaved := int32(len(newKeys))
-  numRecords := int32(len(clientRecords))
+  numSaved := len(newKeys)
+  numRecords := len(clientRecords)
 
+  // TODO: handle case where numRecords > 0, but numSaved == 0?
+  //     should client look for IDs when none succeeded?
   if numRecords != numSaved && numSaved > 0 {
     // find unsaved client ids
     unsavedIds := make([]string, numRecords - numSaved)
