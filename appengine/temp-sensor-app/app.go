@@ -62,7 +62,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
   c.Infof("Requested URL: %v", r.URL)
 
   if (r.Body == nil) {
-    respondWith400(w, c, errors.New("Response body is nil"), "Response body is nil")
+    respondWith400(w, c, errors.New("Request body is nil"), "Request body is nil")
   }
 
   bytes, err := ioutil.ReadAll(r.Body)

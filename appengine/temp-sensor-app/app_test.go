@@ -3,9 +3,10 @@ package temp_sensor_app
 import (
   "code.google.com/p/goprotobuf/proto"
 
-  //"bytes"
+  "bytes"
   "errors"
   _ "fmt"
+  "io/ioutil"
   _ "net/http"
   "net/http/httptest"
   "testing"
@@ -255,4 +256,69 @@ func TestVerifySaved(t *testing.T) {
   a.assertIntsEqual(len(missedIds), 2)
   a.assertStrsEqual("client1", missedIds[0])
   a.assertStrsEqual("client2", missedIds[1])
+}
+
+func TestUpload(t *testing.T) {
+  a := asserts{t}
+  inst, err := aetest.NewInstance(nil)
+  defer inst.Close()
+  a.IsNil(err)
+
+  req := htu21df.UploadRequest{
+    DataAndClientId: []*htu21df.DataAndClientId{
+      &htu21df.DataAndClientId{
+        ClientId: proto.String("client1"),
+        TempAndHumidtyData: &htu21df.TempAndHumidity{
+          RecordedTimestampMs: proto.Int64(1411103037254),
+          TempDegreesC: proto.Float64(23.95),
+          PercentRelativeHumidity: proto.Float64(68.78),
+          SensorName: proto.String("htu21df"),
+          Debug: proto.String("./temp_db_logger.py"),
+        },
+      },
+      &htu21df.DataAndClientId{
+        ClientId: proto.String("client2"),
+        TempAndHumidtyData: &htu21df.TempAndHumidity{
+          RecordedTimestampMs: proto.Int64(1411104501012),
+          TempDegreesC: proto.Float64(23.839),
+          PercentRelativeHumidity: proto.Float64(68.547),
+          SensorName: proto.String("htu21df"),
+          Debug: proto.String("./temp_db_logger.py"),
+        },
+      },
+      &htu21df.DataAndClientId{
+        ClientId: proto.String("client3"),
+        TempAndHumidtyData: &htu21df.TempAndHumidity{
+          RecordedTimestampMs: proto.Int64(1411104611852),
+          TempDegreesC: proto.Float64(23.828),
+          PercentRelativeHumidity: proto.Float64(68.615),
+          SensorName: proto.String("htu21df"),
+          Debug: proto.String("./temp_db_logger.py"),
+        },
+      },
+    },
+  }
+
+  protoBytes, err := proto.Marshal(&req)
+  a.IsNil(err)
+
+  reqBuf := bytes.NewBuffer(protoBytes)
+  httpReq, err := inst.NewRequest("POST", "/upload", reqBuf)
+  a.IsNil(err)
+
+  w := httptest.NewRecorder()
+  upload(w, httpReq)
+
+  respBytes, err := ioutil.ReadAll(w.Body)
+  a.IsNil(err)
+  response := &htu21df.UploadResponse{}
+  err = proto.Unmarshal(respBytes, response)
+  a.IsNil(err)
+  a.assertIntsEqual(3, int(*response.NumSaved))
+
+  c := appengine.NewContext(httpReq)
+  results := make([]*tempAndHumidityRecord, 3)
+  q := datastore.NewQuery(EntityName)
+  _, err = q.GetAll(c, results)
+  a.assertIntsEqual(3, len(results))
 }
